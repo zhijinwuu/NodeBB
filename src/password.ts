@@ -49,8 +49,8 @@ async function getFakeHash(): Promise<string> {
     return fakeHashCache;
 }
 
-// child process
-process.on('message', (msg) => {
+// Child process
+process.on('message', (msg: any) => {
     if (msg.type === 'hash') {
         tryMethod(hashPassword, msg);
     } else if (msg.type === 'compare') {

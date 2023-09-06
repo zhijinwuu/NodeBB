@@ -77,7 +77,7 @@ function getFakeHash() {
         return fakeHashCache;
     });
 }
-// child process
+// Child process
 process.on('message', (msg) => {
     if (msg.type === 'hash') {
         tryMethod(hashPassword, msg);
