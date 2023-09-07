@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -47,7 +47,60 @@ const intFields = [
     'pinExpiry', 'timestamp', 'upvotes', 'downvotes', 'lastposttime',
     'deleterUid',
 ];
+function escapeTitle(topicData) {
+    if (topicData) {
+        if (topicData.title) {
+            topicData.title = translator.escape(validator_1.default.escape(topicData.title));
+        }
+        if (topicData.titleRaw) {
+            topicData.titleRaw = translator.escape(topicData.titleRaw);
+        }
+    }
+}
+function modifyTopic(topic, fields) {
+    if (!topic) {
+        return;
+    }
+    db.parseIntFields(topic, intFields, fields);
+    if (topic.hasOwnProperty('title')) {
+        topic.titleRaw = topic.title;
+        topic.title = String(topic.title);
+    }
+    escapeTitle(topic);
+    if (topic.hasOwnProperty('timestamp')) {
+        topic.timestampISO = utils.toISOString(topic.timestamp);
+        if (!fields.length || fields.includes('scheduled')) {
+            topic.scheduled = topic.timestamp > Date.now();
+        }
+    }
+    if (topic.hasOwnProperty('lastposttime')) {
+        topic.lastposttimeISO = utils.toISOString(topic.lastposttime);
+    }
+    if (topic.hasOwnProperty('pinExpiry')) {
+        topic.pinExpiryISO = utils.toISOString(topic.pinExpiry);
+    }
+    if (topic.hasOwnProperty('upvotes') && topic.hasOwnProperty('downvotes')) {
+        topic.votes = topic.upvotes - topic.downvotes;
+    }
+    if (fields.includes('teaserPid') || !fields.length) {
+        topic.teaserPid = topic.teaserPid || null;
+    }
+    if (fields.includes('tags') || !fields.length) {
+        const tags = String(topic.tags || '');
+        topic.tags = tags.split(',').filter(Boolean).map((tag) => {
+            const escaped = validator_1.default.escape(String(tag));
+            return {
+                value: tag,
+                valueEscaped: escaped,
+                valueEncoded: encodeURIComponent(escaped),
+                class: escaped.replace(/\s/g, '-'),
+            };
+        });
+    }
+}
 function default_1(Topics) {
+    // The next line calls a function in a module that has not been updated to TS yet
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     Topics.getTopicsFields = function (tids, fields) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!Array.isArray(tids) || !tids.length) {
@@ -58,6 +111,8 @@ function default_1(Topics) {
                 fields.push('timestamp');
             }
             const keys = tids.map(tid => `topic:${tid}`);
+            // The next line calls a function in a module that has not been updated to TS yet
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             const topics = yield db.getObjects(keys, fields);
             const result = yield plugins.hooks.fire('filter:topic.getFields', {
                 tids: tids,
@@ -65,7 +120,11 @@ function default_1(Topics) {
                 fields: fields,
                 keys: keys,
             });
+            // The next line calls a function in a module that has not been updated to TS yet
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             result.topics.forEach(topic => modifyTopic(topic, fields));
+            // The next line calls a function in a module that has not been updated to TS yet
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             return result.topics;
         });
     };
@@ -121,54 +180,3 @@ function default_1(Topics) {
 }
 exports.default = default_1;
 ;
-function escapeTitle(topicData) {
-    if (topicData) {
-        if (topicData.title) {
-            topicData.title = translator.escape(validator_1.default.escape(topicData.title));
-        }
-        if (topicData.titleRaw) {
-            topicData.titleRaw = translator.escape(topicData.titleRaw);
-        }
-    }
-}
-function modifyTopic(topic, fields) {
-    if (!topic) {
-        return;
-    }
-    db.parseIntFields(topic, intFields, fields);
-    if (topic.hasOwnProperty('title')) {
-        topic.titleRaw = topic.title;
-        topic.title = String(topic.title);
-    }
-    escapeTitle(topic);
-    if (topic.hasOwnProperty('timestamp')) {
-        topic.timestampISO = utils.toISOString(topic.timestamp);
-        if (!fields.length || fields.includes('scheduled')) {
-            topic.scheduled = topic.timestamp > Date.now();
-        }
-    }
-    if (topic.hasOwnProperty('lastposttime')) {
-        topic.lastposttimeISO = utils.toISOString(topic.lastposttime);
-    }
-    if (topic.hasOwnProperty('pinExpiry')) {
-        topic.pinExpiryISO = utils.toISOString(topic.pinExpiry);
-    }
-    if (topic.hasOwnProperty('upvotes') && topic.hasOwnProperty('downvotes')) {
-        topic.votes = topic.upvotes - topic.downvotes;
-    }
-    if (fields.includes('teaserPid') || !fields.length) {
-        topic.teaserPid = topic.teaserPid || null;
-    }
-    if (fields.includes('tags') || !fields.length) {
-        const tags = String(topic.tags || '');
-        topic.tags = tags.split(',').filter(Boolean).map((tag) => {
-            const escaped = validator_1.default.escape(String(tag));
-            return {
-                value: tag,
-                valueEscaped: escaped,
-                valueEncoded: encodeURIComponent(escaped),
-                class: escaped.replace(/\s/g, '-'),
-            };
-        });
-    }
-}

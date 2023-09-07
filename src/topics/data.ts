@@ -1,4 +1,3 @@
-'use strict';
 
 import validator from 'validator';
 
@@ -36,71 +35,6 @@ const intFields = [
     'deleterUid',
 ];
 
-
-export default function (Topics: any) {
-    Topics.getTopicsFields = async function (tids: number[], fields: string[]) {
-        if (!Array.isArray(tids) || !tids.length) {
-            return [];
-        }
-
-        // "scheduled" is derived from "timestamp"
-        if (fields.includes('scheduled') && !fields.includes('timestamp')) {
-            fields.push('timestamp');
-        }
-
-        const keys = tids.map(tid => `topic:${tid}`);
-        const topics: Topic[] = await db.getObjects(keys, fields);
-        const result = await plugins.hooks.fire('filter:topic.getFields', {
-            tids: tids,
-            topics: topics,
-            fields: fields,
-            keys: keys,
-        });
-        result.topics.forEach(topic => modifyTopic(topic, fields));
-        return result.topics;
-    };
-
-    Topics.getTopicField = async function (tid: number, field: string) {
-        const topic = await Topics.getTopicFields(tid, [field]);
-        return topic ? topic[field] : null;
-    };
-
-    Topics.getTopicFields = async function (tid: number, fields: string[]) {
-        const topics: Topic[] = await Topics.getTopicsFields([tid], fields);
-        return topics ? topics[0] : null;
-    };
-
-    Topics.getTopicData = async function (tid: number) {
-        const topics: Topic[] = await Topics.getTopicsFields([tid], []);
-        return topics && topics.length ? topics[0] : null;
-    };
-
-    Topics.getTopicsData = async function (tids: number[]) {
-        return await Topics.getTopicsFields(tids, []);
-    };
-
-    Topics.getCategoryData = async function (tid: number) {
-        const cid = await Topics.getTopicField(tid, 'cid');
-        return await categories.getCategoryData(cid);
-    };
-
-    Topics.setTopicField = async function (tid: number, field: string, value: any) {
-        await db.setObjectField(`topic:${tid}`, field, value);
-    };
-
-    Topics.setTopicFields = async function (tid: number, data: Record<string, any>) {
-        await db.setObject(`topic:${tid}`, data);
-    };
-
-    Topics.deleteTopicField = async function (tid: number, field: string) {
-        await db.deleteObjectField(`topic:${tid}`, field);
-    };
-
-    Topics.deleteTopicFields = async function (tid: number, fields: string[]) {
-        await db.deleteObjectFields(`topic:${tid}`, fields);
-    };
-};
-
 function escapeTitle(topicData: any) {
     if (topicData) {
         if (topicData.title) {
@@ -111,7 +45,6 @@ function escapeTitle(topicData: any) {
         }
     }
 }
-
 
 function modifyTopic(topic: any, fields: string[]) {
     if (!topic) {
@@ -164,3 +97,78 @@ function modifyTopic(topic: any, fields: string[]) {
         });
     }
 }
+
+
+export default function (Topics: any) {
+    // The next line calls a function in a module that has not been updated to TS yet
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    Topics.getTopicsFields = async function (tids: number[], fields: string[]) {
+        if (!Array.isArray(tids) || !tids.length) {
+            return [];
+        }
+
+        // "scheduled" is derived from "timestamp"
+        if (fields.includes('scheduled') && !fields.includes('timestamp')) {
+            fields.push('timestamp');
+        }
+
+        const keys = tids.map(tid => `topic:${tid}`);
+        // The next line calls a function in a module that has not been updated to TS yet
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        const topics: Topic[] = await db.getObjects(keys, fields);
+        const result = await plugins.hooks.fire('filter:topic.getFields', {
+            tids: tids,
+            topics: topics,
+            fields: fields,
+            keys: keys,
+        });
+        // The next line calls a function in a module that has not been updated to TS yet
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        result.topics.forEach(topic => modifyTopic(topic, fields));
+        // The next line calls a function in a module that has not been updated to TS yet
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        return result.topics;
+    };
+
+    Topics.getTopicField = async function (tid: number, field: string) {
+        const topic = await Topics.getTopicFields(tid, [field]);
+        return topic ? topic[field] : null;
+    };
+
+    Topics.getTopicFields = async function (tid: number, fields: string[]) {
+        const topics: Topic[] = await Topics.getTopicsFields([tid], fields);
+        return topics ? topics[0] : null;
+    };
+
+    Topics.getTopicData = async function (tid: number) {
+        const topics: Topic[] = await Topics.getTopicsFields([tid], []);
+        return topics && topics.length ? topics[0] : null;
+    };
+
+    Topics.getTopicsData = async function (tids: number[]) {
+        return await Topics.getTopicsFields(tids, []);
+    };
+
+    Topics.getCategoryData = async function (tid: number) {
+        const cid = await Topics.getTopicField(tid, 'cid');
+        return await categories.getCategoryData(cid);
+    };
+
+    Topics.setTopicField = async function (tid: number, field: string, value: any) {
+        await db.setObjectField(`topic:${tid}`, field, value);
+    };
+
+    Topics.setTopicFields = async function (tid: number, data: Record<string, any>) {
+        await db.setObject(`topic:${tid}`, data);
+    };
+
+    Topics.deleteTopicField = async function (tid: number, field: string) {
+        await db.deleteObjectField(`topic:${tid}`, field);
+    };
+
+    Topics.deleteTopicFields = async function (tid: number, fields: string[]) {
+        await db.deleteObjectFields(`topic:${tid}`, fields);
+    };
+};
+
+
