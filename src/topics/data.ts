@@ -1,6 +1,6 @@
 'use strict';
 
-import * as validator from 'validator';
+import validator from 'validator';
 
 import * as db from '../database';
 import * as categories from '../categories';
@@ -19,7 +19,7 @@ interface Topic {
     postercount: number;
     deleted: number;
     locked: number;
-    pinned: number;t
+    pinned: number;
     pinExpiry: number;
     timestamp: number;
     upvotes: number;
@@ -35,6 +35,7 @@ const intFields = [
     'pinExpiry', 'timestamp', 'upvotes', 'downvotes', 'lastposttime',
     'deleterUid',
 ];
+
 
 export default function (Topics: any) {
     Topics.getTopicsFields = async function (tids: number[], fields: string[]) {
@@ -100,7 +101,7 @@ export default function (Topics: any) {
     };
 };
 
-function escapeTitle(topicData) {
+function escapeTitle(topicData: any) {
     if (topicData) {
         if (topicData.title) {
             topicData.title = translator.escape(validator.escape(topicData.title));
@@ -111,7 +112,8 @@ function escapeTitle(topicData) {
     }
 }
 
-function modifyTopic(topic, fields) {
+
+function modifyTopic(topic: any, fields: string[]) {
     if (!topic) {
         return;
     }
@@ -150,7 +152,8 @@ function modifyTopic(topic, fields) {
 
     if (fields.includes('tags') || !fields.length) {
         const tags = String(topic.tags || '');
-        topic.tags = tags.split(',').filter(Boolean).map((tag) => {
+        topic.tags = tags.split(',').filter(Boolean).map((tag: string) => {
+
             const escaped = validator.escape(String(tag));
             return {
                 value: tag,
