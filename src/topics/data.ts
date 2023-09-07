@@ -9,6 +9,26 @@ import * as translator from '../translator';
 import * as plugins from '../plugins';
 
 
+interface Topic {
+    tid: number;
+    cid: number;
+    uid: number;
+    mainPid: number;
+    postcount: number;
+    viewcount: number;
+    postercount: number;
+    deleted: number;
+    locked: number;
+    pinned: number;
+    pinExpiry: number;
+    timestamp: number;
+    upvotes: number;
+    downvotes: number;
+    lastposttime: number;
+    deleterUid: number;
+}
+
+
 const intFields = [
     'tid', 'cid', 'uid', 'mainPid', 'postcount',
     'viewcount', 'postercount', 'deleted', 'locked', 'pinned',
