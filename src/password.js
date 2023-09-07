@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -39,13 +39,15 @@ const util = __importStar(require("util"));
 const bcrypt = __importStar(require("bcryptjs"));
 const debugFork_1 = require("./meta/debugFork");
 function forkChild(message, callback) {
+    // The next line calls a function in a module that has not been updated to TS yet
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     const child = (0, debugFork_1.fork)(path.join(__dirname, 'password'));
     child.on('message', (msg) => {
         callback(msg.err ? new Error(msg.err) : null, msg.result);
     });
     child.on('error', (err) => {
         console.error(err.stack);
-        callback(err, null);
+        callback(err);
     });
     child.send(message);
 }
@@ -53,20 +55,10 @@ const forkChildAsync = util.promisify(forkChild);
 function hash(rounds, password) {
     return __awaiter(this, void 0, void 0, function* () {
         password = crypto.createHash('sha512').update(password).digest('hex');
-        return yield forkChildAsync({ type: 'hash', rounds: rounds, password: password });
+        return yield forkChildAsync({ type: 'hash', rounds, password });
     });
 }
 exports.hash = hash;
-function compare2(password, hash, shaWrapped) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const fakeHash = yield getFakeHash();
-        if (shaWrapped) {
-            password = crypto.createHash('sha512').update(password).digest('hex');
-        }
-        return yield forkChildAsync({ type: 'compare', password: password, hash: hash || fakeHash });
-    });
-}
-exports.compare2 = compare2;
 let fakeHashCache;
 function getFakeHash() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -77,15 +69,6 @@ function getFakeHash() {
         return fakeHashCache;
     });
 }
-// Child process
-process.on('message', (msg) => {
-    if (msg.type === 'hash') {
-        tryMethod(hashPassword, msg);
-    }
-    else if (msg.type === 'compare') {
-        tryMethod(compare, msg);
-    }
-});
 function tryMethod(method, msg) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -112,4 +95,24 @@ function compare(msg) {
         return yield bcrypt.compare(String(msg.password || ''), String(msg.hash || ''));
     });
 }
+function compare2(password, hash, shaWrapped) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const fakeHash = yield getFakeHash();
+        if (shaWrapped) {
+            password = crypto.createHash('sha512').update(password).digest('hex');
+        }
+        const result = yield forkChildAsync({ type: 'compare', password, hash: hash || fakeHash });
+        return result === 'true';
+    });
+}
+exports.compare2 = compare2;
+// child process
+process.on('message', (msg) => {
+    if (msg.type === 'hash') {
+        tryMethod(hashPassword, msg);
+    }
+    else if (msg.type === 'compare') {
+        tryMethod(compare, msg);
+    }
+});
 require('./promisify')(exports);
